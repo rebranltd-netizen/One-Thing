@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="One Thing" />
+  <meta name="theme-color" content="#FAF7F2" />
+  <title>One Thing</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: Georgia, 'Times New Roman', serif;
+      background: #FAF7F2;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+    }
+    #app {
+      width: 100%;
+      max-width: 480px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+    .header {
+      padding: 20px 24px 16px;
+      border-bottom: 1px solid #E8E0D4;
+      background: #FAF7F2;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    .greeting-label {
+      font-size: 11px;
+      letter-spacing: 0.15em;
+      color: #9A8E82;
+      text-transform: uppercase;
+      margin-bottom: 2px;
+    }
+    .header h1 {
+      font-size: 21px;
+      font-weight: 400;
+      color: #2C2416;
+      letter-spacing: -0.02em;
+    }
+    .logo-btn {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #E8B4B8, #B4D4E8);
+      border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+    }
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+    }
+    .tab {
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      cursor: pointer;
+      font-family: inherit;
+      letter-spacing: 0.02em;
+      border: 1.5px solid #D4C8BC;
+      background: transparent;
+      color: #6B5E52;
+      transition: all 0.15s;
+    }
+    .tab.active {
+      border-color: #2C2416;
+      background: #2C2416;
+      color: #FAF7F2;
+    }
+    .view { display: none; flex: 1; flex-direction: column; }
+    .view.active { display: flex; }
+
+    /* CHAT */
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      max-height: calc(100vh - 230px);
+    }
+    .msg { display: flex; }
+    .msg.user { justify-content: flex-end; }
+    .msg.assistant { justify-content: flex-start; }
+    .bubble {
+      max-width: 82%;
+      padding: 12px 16px;
+      font-size: 15px;
+      line-height: 1.55;
+      white-space: pre-wrap;
+    }
+    .msg.user .bubble {
+      background: #2C2416;
+      color: #FAF7F2;
+      border-radius: 18px 18px 4px 18px;
+    }
+    .msg.assistant .bubble {
+      background: #FFFFFF;
+      color: #2C2416;
+      border-radius: 4px 18px 18px 18px;
+      border: 1px solid #EDE6DC;
+      box-shadow: 0 1px 4px rgba(44,36,22,0.08);
+    }
+    .typing { display: flex; gap: 5px; align-items: center; padding: 14px 18px; }
+    .dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: #C8B4A0;
+      animation: pulse 1.2s ease-in-out infinite;
+    }
+    .dot:nth-child(2) { animation-delay: 0.2s; }
+    .dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes pulse {
+      0%, 100% { opacity: 0.3; transform: scale(0.8); }
+      50% { opacity: 1; transform: scale(1); }
+    }
+    .quick-btns {
+      padding: 8px 24px 0;
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .quick-btn {
+      padding: 5px 12px;
+      border-radius: 16px;
+      border: 1px solid #D4C8BC;
+      background: transparent;
+      color: #6B5E52;
+      font-size: 12px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .quick-btn.muted { border-color: #EDE6DC; color: #B4A89C; }
+    .input-row {
+      padding: 10px 24px 28px;
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+    }
+    textarea {
+      flex: 1;
+      padding: 12px 16px;
+      border-radius: 16px;
+      border: 1.5px solid #D4C8BC;
+      background: #FFFFFF;
+      color: #2C2416;
+      font-size: 15px;
+      font-family: inherit;
+      resize: none;
+      outline: none;
+      line-height: 1.4;
+    }
+    textarea:focus { border-color: #2C2416; }
+    .send-btn {
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      border: none;
+      background: #D4C8BC;
+      color: #FAF7F2;
+      font-size: 20px;
+      cursor: default;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: background 0.2s;
+    }
+    .send-btn.ready { background: #2C2416; cursor: pointer; }
+
+    /* CHECK IN */
+    .checkin-view {
+      padding: 24px;
+      overflow-y: auto;
+      gap: 24px;
+    }
+    .section-label {
+      font-size: 11px;
+      color: #9A8E82;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .section-title {
+      font-size: 18px;
+      font-weight: 400;
+      color: #2C2416;
+      margin-bottom: 12px;
+    }
+    .energy-options { display: flex; flex-direction: column; gap: 8px; }
+    .option-btn {
+      padding: 12px 16px;
+      border-radius: 12px;
+      border: 1.5px solid #D4C8BC;
+      background: #FFFFFF;
+      color: #2C2416;
+      cursor: pointer;
+      font-family: inherit;
+      text-align: left;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.15s;
+    }
+    .option-btn.selected {
+      border: 2px solid #2C2416;
+      background: #2C2416;
+      color: #FAF7F2;
+    }
+    .option-desc { font-size: 12px; opacity: 0.6; }
+    .time-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .time-btn {
+      padding: 14px;
+      border-radius: 12px;
+      border: 1.5px solid #D4C8BC;
+      background: #FFFFFF;
+      color: #2C2416;
+      cursor: pointer;
+      font-family: inherit;
+      text-align: center;
+      transition: all 0.15s;
+    }
+    .time-btn.selected {
+      border: 2px solid #2C2416;
+      background: #2C2416;
+      color: #FAF7F2;
+    }
+    .time-label { font-size: 15px; font-weight: 500; }
+    .time-desc { font-size: 11px; opacity: 0.6; margin-top: 2px; }
+    .context-input {
+      padding: 12px 16px;
+      border-radius: 12px;
+      border: 1.5px solid #D4C8BC;
+      background: #FFFFFF;
+      color: #2C2416;
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+      width: 100%;
+    }
+    .context-input:focus { border-color: #2C2416; }
+    .go-btn {
+      padding: 16px;
+      border-radius: 14px;
+      border: none;
+      background: #D4C8BC;
+      color: #FAF7F2;
+      font-size: 16px;
+      cursor: default;
+      font-family: inherit;
+      letter-spacing: 0.02em;
+      width: 100%;
+      transition: background 0.2s;
+    }
+    .go-btn.ready { background: #2C2416; cursor: pointer; }
+
+    /* TASKS */
+    .tasks-view { padding: 24px; overflow-y: auto; gap: 12px; }
+    .tasks-intro { color: #6B5E52; font-size: 14px; line-height: 1.5; margin-bottom: 4px; }
+    .empty-state {
+      padding: 40px 24px;
+      text-align: center;
+      background: #FFFFFF;
+      border-radius: 16px;
+      border: 1.5px dashed #D4C8BC;
+      margin-top: 8px;
+    }
+    .empty-emoji { font-size: 36px; margin-bottom: 12px; }
+    .empty-text { color: #9A8E82; font-size: 14px; line-height: 1.6; }
+    .cat-label {
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      color: #9A8E82;
+      text-transform: uppercase;
+      margin: 12px 0 8px;
+    }
+    .task-card {
+      padding: 12px 14px;
+      background: #FFFFFF;
+      border-radius: 12px;
+      border: 1px solid #EDE6DC;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 6px;
+    }
+    .task-text { font-size: 15px; color: #2C2416; margin-bottom: 4px; line-height: 1.4; }
+    .task-meta { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+    .tag {
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 11px;
+      color: #6B5E52;
+    }
+    .task-detail { color: #B4A89C; font-size: 11px; }
+    .waiting-flag { color: #E8A0A0; font-size: 11px; }
+    .complete-btn {
+      background: none;
+      border: 1.5px solid #D4C8BC;
+      border-radius: 50%;
+      width: 28px; height: 28px;
+      color: #C8B4A0;
+      cursor: pointer;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-left: 10px;
+    }
+
+    /* API SETUP */
+    .setup-screen {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 24px;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+    .setup-logo {
+      width: 56px; height: 56px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #E8B4B8, #B4D4E8);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px;
+      margin: 0 auto 16px;
+    }
+    .setup-title { font-size: 26px; font-weight: 400; color: #2C2416; margin-bottom: 8px; letter-spacing: -0.02em; text-align: center; }
+    .setup-sub { color: #9A8E82; font-size: 15px; line-height: 1.5; text-align: center; margin-bottom: 32px; }
+    .info-box {
+      background: #FFF8E8;
+      border: 1px solid #E8D4A0;
+      border-radius: 12px;
+      padding: 16px;
+      font-size: 13px;
+      color: #6B5E42;
+      line-height: 1.7;
+      margin-bottom: 16px;
+      width: 100%;
+    }
+    .api-input {
+      padding: 14px 16px;
+      border-radius: 12px;
+      border: 1.5px solid #D4C8BC;
+      background: #FFFFFF;
+      color: #2C2416;
+      font-size: 14px;
+      font-family: monospace;
+      outline: none;
+      width: 100%;
+      margin-bottom: 12px;
+    }
+    .api-input:focus { border-color: #2C2416; }
+    .save-btn {
+      padding: 16px;
+      border-radius: 12px;
+      border: none;
+      background: #2C2416;
+      color: #FAF7F2;
+      font-size: 16px;
+      cursor: pointer;
+      font-family: inherit;
+      width: 100%;
+      margin-bottom: 8px;
+    }
+    .privacy-note { font-size: 12px; color: #B4A89C; text-align: center; }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #D4C8BC; border-radius: 2px; }
+  </style>
+</head>
+<body>
+
+<!-- API SETUP SCREEN -->
+<div id="setup-screen" class="setup-screen" style="display:none;">
+  <div class="setup-logo">✦</div>
+  <h1 class="setup-title">One Thing</h1>
+  <p class="setup-sub">Your execution assistant.<br/>One API key to get started.</p>
+  <div class="info-box">
+    <strong>How to get your API key:</strong><br/>
+    1. Go to <strong>console.anthropic.com</strong><br/>
+    2. Sign up / log in (free)<br/>
+    3. Click "API Keys" → "Create Key"<br/>
+    4. Copy and paste it below<br/><br/>
+    Cost: ~$0.01–0.05 NZD per day of normal use.
+  </div>
+  <input type="password" class="api-input" id="api-key-input" placeholder="sk-ant-api03-..." />
+  <button class="save-btn" onclick="saveApiKey()">Save & Start →</button>
+  <p class="privacy-note">Stored only on this device. Never shared.</p>
+</div>
+
+<!-- MAIN APP -->
+<div id="app" style="display:none;">
+  <div class="header">
+    <div class="header-top">
+      <div>
+        <div class="greeting-label" id="greeting-label">Morning</div>
+        <h1>Let's get one thing done.</h1>
+      </div>
+      <button class="logo-btn" onclick="showSetup(true)" title="Settings">✦</button>
+    </div>
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('chat', this)">Chat</button>
+      <button class="tab" onclick="switchTab('checkin', this)">Check In</button>
+      <button class="tab" id="tasks-tab" onclick="switchTab('tasks', this)">Tasks</button>
+    </div>
+  </div>
+
+  <!-- CHAT VIEW -->
+  <div class="view active" id="view-chat">
+    <div class="messages" id="messages"></div>
+    <div class="quick-btns">
+      <button class="quick-btn" onclick="sendMessage('What should I do right now?')">What should I do?</button>
+      <button class="quick-btn" onclick="sendMessage('Add a task')">Add a task</button>
+      <button class="quick-btn" onclick="sendMessage('I\\'m overwhelmed')">I'm overwhelmed</button>
+      <button class="quick-btn" onclick="sendMessage('Brain dump')">Brain dump</button>
+      <button class="quick-btn muted" onclick="clearChat()">Clear chat</button>
+    </div>
+    <div class="input-row">
+      <textarea id="chat-input" rows="2" placeholder="Dump tasks, check in, ask anything..."
+        oninput="updateSendBtn()" onkeydown="handleEnter(event)"></textarea>
+      <button class="send-btn" id="send-btn" onclick="sendFromInput()">↑</button>
+    </div>
+  </div>
+
+  <!-- CHECK IN VIEW -->
+  <div class="view checkin-view" id="view-checkin">
+    <div>
+      <div class="section-label">Energy right now</div>
+      <div class="energy-options" id="energy-options">
+        <button class="option-btn" onclick="selectEnergy('exhausted', this)">
+          <span>💀 Exhausted</span><span class="option-desc">touched out, baby chaos</span>
+        </button>
+        <button class="option-btn" onclick="selectEnergy('tired', this)">
+          <span>😮‍💨 Tired but OK</span><span class="option-desc">distracted, surviving</span>
+        </button>
+        <button class="option-btn" onclick="selectEnergy('ok', this)">
+          <span>😐 OK</span><span class="option-desc">managing, semi-focused</span>
+        </button>
+        <button class="option-btn" onclick="selectEnergy('good', this)">
+          <span>✨ Good</span><span class="option-desc">walked, coffee working</span>
+        </button>
+        <button class="option-btn" onclick="selectEnergy('energised', this)">
+          <span>⚡ Energised</span><span class="option-desc">clear headed, let's go</span>
+        </button>
+      </div>
+    </div>
+    <div>
+      <div class="section-label" style="margin-top:8px;">Time available</div>
+      <div class="time-grid">
+        <button class="time-btn" onclick="selectTime('<10', this)">
+          <div class="time-label">&lt; 10 mins</div>
+          <div class="time-desc">phone only</div>
+        </button>
+        <button class="time-btn" onclick="selectTime('10-25', this)">
+          <div class="time-label">10–25 mins</div>
+          <div class="time-desc">focused burst</div>
+        </button>
+        <button class="time-btn" onclick="selectTime('25-45', this)">
+          <div class="time-label">25–45 mins</div>
+          <div class="time-desc">proper block</div>
+        </button>
+        <button class="time-btn" onclick="selectTime('45+', this)">
+          <div class="time-label">45+ mins</div>
+          <div class="time-desc">deep work</div>
+        </button>
+      </div>
+    </div>
+    <input class="context-input" id="checkin-context" placeholder="Anything else? (optional — baby napping, pickup in 40 mins...)" />
+    <button class="go-btn" id="go-btn" onclick="submitCheckin()">Tell me what to do →</button>
+  </div>
+
+  <!-- TASKS VIEW -->
+  <div class="view tasks-view" id="view-tasks">
+    <p class="tasks-intro">Tasks captured automatically from chat. Tick off when done.</p>
+    <div id="tasks-list"></div>
+  </div>
+</div>
+
+<script>
+const SYSTEM_PROMPT = `You are an execution assistant for a specific person. Here is everything you know about her:
+
+LIFE CONTEXT:
+- Mum of 3: 6-month-old baby at home + 2 older school-age children
+- Works in property management (franchise)
+- Chartered accountant working in industry
+- Building a side hustle (exploring AI-powered execution assistant product)
+- Originally from UK, living in NZ for 9 years
+- Values: freedom, impact, authenticity
+
+ENERGY PATTERNS:
+- HIGH energy: After school drop-off + morning walk (typically 9-11am)
+- VARIABLE: Bursts throughout the day, unpredictable with baby
+- PHONE-ONLY time: While feeding baby or baby sleeping
+- DEEP WORK: Evenings when kids are down — but she doesn't want to work every evening
+- Morning is her golden window — protect it fiercely
+
+TASK CATEGORIES:
+- WORK: Day job — growth, automation, productivity. Gets stuck in day-to-day firefighting.
+- SIDE HUSTLE: Exploring AI business ideas, building execution assistant product
+- PERSONAL ADMIN: Constantly sidelined
+- KIDS/FAMILY: School logistics, activities budgeting, mental load
+
+PERSONALITY & TENDENCIES:
+- Leaves things to last minute
+- Lots of ideas, struggles with execution
+- Carries significant mental load
+- Loves systems, process improvement, spreadsheets
+- Wants freedom — things that run without her
+
+YOUR ROLE: Calm, smart execution partner. Warm but efficient. Smart friend tone, not productivity app.
+
+RULES:
+- ALWAYS recommend just ONE task when asked what to do
+- Match energy level to task complexity
+- High energy + 45+ mins → side hustle or deep work, NOT admin
+- Low energy + phone → quick win she'll actually do
+- Never give a list when she asks what to do next
+- Celebrate completions genuinely
+- If spiralling, acknowledge briefly then redirect to ONE thing
+
+TASK CAPTURE: When she adds a task, end your response with (on its own line):
+TASK_JSON:{"text":"task description","category":"work","energy_needed":"medium","time_needed":"25-45","mode":"needs-desk","urgency":"this-week"}
+Categories: work | side-hustle | personal-admin | kids-family
+Energy: low | medium | high
+Time: <10 | 10-25 | 25-45 | 45+
+Mode: phone-ok | needs-desk
+Urgency: today | this-week | someday`;
+
+const CATS = {
+  "work": { color: "#E8B4B8", label: "Work", emoji: "💼" },
+  "side-hustle": { color: "#B4D4E8", label: "Side Hustle", emoji: "✦" },
+  "personal-admin": { color: "#C8E8B4", label: "Admin", emoji: "📋" },
+  "kids-family": { color: "#E8D4B4", label: "Kids & Family", emoji: "🌿" }
+};
+
+let apiKey = '';
+let messages = [];
+let tasks = [];
+let checkinEnergy = '';
+let checkinTime = '';
+let loading = false;
+
+function load() {
+  try {
+    apiKey = localStorage.getItem('ea_key') || '';
+    messages = JSON.parse(localStorage.getItem('ea_messages') || '[]');
+    tasks = JSON.parse(localStorage.getItem('ea_tasks') || '[]');
+  } catch(e) {}
+}
+
+function save() {
+  try {
+    localStorage.setItem('ea_messages', JSON.stringify(messages));
+    localStorage.setItem('ea_tasks', JSON.stringify(tasks));
+  } catch(e) {}
+}
+
+function init() {
+  load();
+  const hour = new Date().getHours();
+  const greet = hour < 12 ? 'Morning' : hour < 17 ? 'Afternoon' : 'Evening';
+  document.getElementById('greeting-label').textContent = greet;
+
+  if (!apiKey) {
+    showSetup(false);
+  } else {
+    document.getElementById('setup-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+    if (messages.length === 0) {
+      addMessage('assistant', `${greet} 👋 What's going on right now? Dump tasks, check in for a recommendation, or just tell me what's on your mind.`);
+    } else {
+      renderMessages();
+    }
+    renderTasks();
+    updateTasksTab();
+  }
+}
+
+function showSetup(fromSettings) {
+  document.getElementById('setup-screen').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+  if (fromSettings) {
+    const back = document.createElement('button');
+    back.textContent = '← Back';
+    back.style.cssText = 'background:none;border:none;color:#9A8E82;font-size:14px;cursor:pointer;font-family:inherit;margin-top:8px;';
+    back.onclick = () => {
+      document.getElementById('setup-screen').style.display = 'none';
+      document.getElementById('app').style.display = 'flex';
+    };
+    const screen = document.getElementById('setup-screen');
+    if (!screen.querySelector('.back-btn')) {
+      back.className = 'back-btn';
+      screen.appendChild(back);
+    }
+  }
+}
+
+function saveApiKey() {
+  const key = document.getElementById('api-key-input').value.trim();
+  if (!key.startsWith('sk-ant-')) {
+    alert("That doesn't look right — Anthropic API keys start with sk-ant-");
+    return;
+  }
+  apiKey = key;
+  localStorage.setItem('ea_key', key);
+  document.getElementById('setup-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  init();
+}
+
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + name).classList.add('active');
+}
+
+function addMessage(role, content) {
+  messages.push({ role, content });
+  save();
+  renderMessages();
+}
+
+function renderMessages() {
+  const container = document.getElementById('messages');
+  container.innerHTML = '';
+  messages.forEach(m => {
+    const div = document.createElement('div');
+    div.className = 'msg ' + m.role;
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble';
+    bubble.textContent = m.content;
+    div.appendChild(bubble);
+    container.appendChild(div);
+  });
+  container.scrollTop = container.scrollHeight;
+}
+
+function showTyping() {
+  const container = document.getElementById('messages');
+  const div = document.createElement('div');
+  div.className = 'msg assistant';
+  div.id = 'typing-indicator';
+  div.innerHTML = '<div class="bubble" style="padding:14px 18px;"><div class="typing"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>';
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+}
+
+function hideTyping() {
+  const el = document.getElementById('typing-indicator');
+  if (el) el.remove();
+}
+
+function parseTask(reply) {
+  const match = reply.match(/TASK_JSON:(\{[^\n]+\})/);
+  if (match) {
+    try {
+      const t = JSON.parse(match[1]);
+      t.id = Date.now();
+      t.addedAt = new Date().toISOString();
+      t.checkinCount = 0;
+      return t;
+    } catch(e) {}
+  }
+  return null;
+}
+
+function cleanReply(reply) {
+  return reply.replace(/TASK_JSON:\{[^\n]+\}/, '').trim();
+}
+
+async function sendMessage(text) {
+  if (!text.trim() || loading) return;
+  if (!apiKey) { showSetup(false); return; }
+
+  loading = true;
+  addMessage('user', text);
+  document.getElementById('chat-input').value = '';
+  updateSendBtn();
+  showTyping();
+
+  const history = messages.slice(0, -1).map(m => ({ role: m.role, content: m.content }));
+  let userContent = text;
+  if (tasks.length > 0) {
+    userContent += `\n\n[TASKS (${tasks.length}):\n${tasks.map(t =>
+      `- "${t.text}" | ${t.category} | ${t.energy_needed} energy | ${t.time_needed} | ${t.urgency} | ${t.checkinCount||0} check-ins`
+    ).join('\n')}]`;
+  }
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: SYSTEM_PROMPT,
+        messages: [...history, { role: 'user', content: userContent }]
+      })
+    });
+
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+
+    const raw = data.content?.map(b => b.text || '').join('') || 'Something went wrong.';
+    const task = parseTask(raw);
+    const clean = cleanReply(raw);
+
+    if (task) {
+      tasks.push(task);
+      save();
+      renderTasks();
+      updateTasksTab();
+    }
+
+    if (text.toLowerCase().includes('what should i do') || text.toLowerCase().includes('checking in')) {
+      tasks = tasks.map(t => ({ ...t, checkinCount: (t.checkinCount||0) + 1 }));
+      save();
+    }
+
+    hideTyping();
+    addMessage('assistant', clean);
+
+  } catch(err) {
+    hideTyping();
+    addMessage('assistant', `Connection issue: ${err.message}. Tap ✦ to check your API key.`);
+  }
+
+  loading = false;
+}
+
+function sendFromInput() {
+  const val = document.getElementById('chat-input').value;
+  sendMessage(val);
+}
+
+function handleEnter(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendFromInput();
+  }
+}
+
+function updateSendBtn() {
+  const val = document.getElementById('chat-input').value.trim();
+  const btn = document.getElementById('send-btn');
+  btn.classList.toggle('ready', !!val);
+}
+
+function clearChat() {
+  if (confirm('Clear all chat history? Tasks will be kept.')) {
+    messages = [];
+    save();
+    renderMessages();
+  }
+}
+
+function selectEnergy(val, btn) {
+  checkinEnergy = val;
+  document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  updateGoBtn();
+}
+
+function selectTime(val, btn) {
+  checkinTime = val;
+  document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  updateGoBtn();
+}
+
+function updateGoBtn() {
+  const btn = document.getElementById('go-btn');
+  btn.classList.toggle('ready', !!(checkinEnergy && checkinTime));
+}
+
+function submitCheckin() {
+  if (!checkinEnergy || !checkinTime) return;
+  const context = document.getElementById('checkin-context').value;
+  const msg = `Checking in. Energy: ${checkinEnergy}. Time: ${checkinTime}.${context ? ' Context: ' + context : ''} What's the one thing I should do right now?`;
+
+  checkinEnergy = '';
+  checkinTime = '';
+  document.getElementById('checkin-context').value = '';
+  document.querySelectorAll('.option-btn, .time-btn').forEach(b => b.classList.remove('selected'));
+  document.getElementById('go-btn').classList.remove('ready');
+
+  switchTab('chat', document.querySelector('.tab'));
+  sendMessage(msg);
+}
+
+function renderTasks() {
+  const container = document.getElementById('tasks-list');
+  if (tasks.length === 0) {
+    container.innerHTML = '<div class="empty-state"><div class="empty-emoji">🌿</div><div class="empty-text">Nothing captured yet.<br/>Head to chat and start talking.</div></div>';
+    return;
+  }
+  let html = '';
+  Object.entries(CATS).forEach(([key, cat]) => {
+    const catTasks = tasks.filter(t => t.category === key);
+    if (!catTasks.length) return;
+    html += `<div class="cat-label">${cat.emoji} ${cat.label}</div>`;
+    catTasks.forEach(task => {
+      html += `<div class="task-card">
+        <div style="flex:1">
+          <div class="task-text">${task.text}</div>
+          <div class="task-meta">
+            <span class="tag" style="background:${cat.color}50">${task.urgency}</span>
+            <span class="task-detail">${task.time_needed} · ${task.energy_needed} energy · ${task.mode === 'phone-ok' ? '📱' : '💻'}</span>
+            ${(task.checkinCount||0) > 2 ? '<span class="waiting-flag">👀 been waiting</span>' : ''}
+          </div>
+        </div>
+        <button class="complete-btn" onclick="completeTask(${task.id})">✓</button>
+      </div>`;
+    });
+  });
+  container.innerHTML = html;
+}
+
+function completeTask(id) {
+  tasks = tasks.filter(t => t.id !== id);
+  save();
+  renderTasks();
+  updateTasksTab();
+  sendMessage('I just completed a task ✓');
+}
+
+function updateTasksTab() {
+  const btn = document.getElementById('tasks-tab');
+  btn.textContent = tasks.length > 0 ? `Tasks (${tasks.length})` : 'Tasks';
+}
+
+init();
+</script>
+</body>
+</html>
